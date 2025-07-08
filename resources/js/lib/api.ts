@@ -11,12 +11,26 @@ const apiClient = axios.create({
   },
 })
 
+// Update the Contact interface to include batch_id
 export interface Contact {
   id: number
   name: string | null
   email: string
+  batch_id?: number
   created_at: string
   updated_at: string
+}
+
+// Update the Batch interface to include contacts directly
+export interface Batch {
+  id: number
+  name: string
+  file_path: string
+  created_at: string
+  updated_at: string
+  contacts_count?: number // This comes from the list API
+  contacts?: Contact[] // This comes from the detail API
+  campaigns: BatchCampaign[]
 }
 
 export interface Template {
@@ -43,6 +57,22 @@ export interface Campaign {
   }
 }
 
+export interface BatchCampaign {
+  id: number
+  batch_id: number
+  email_template_id: number
+  created_at: string
+  updated_at: string
+  email_template: {
+    id: number
+    title: string
+    subject: string
+    body: string
+    created_at: string
+    updated_at: string
+  }
+}
+
 export interface PaginationLink {
   url: string | null
   label: string
@@ -52,6 +82,22 @@ export interface PaginationLink {
 export interface ContactsResponse {
   current_page: number
   data: Contact[]
+  first_page_url: string
+  from: number
+  last_page: number
+  last_page_url: string
+  links: PaginationLink[]
+  next_page_url: string | null
+  path: string
+  per_page: number
+  prev_page_url: string | null
+  to: number
+  total: number
+}
+
+export interface BatchesResponse {
+  current_page: number
+  data: Batch[]
   first_page_url: string
   from: number
   last_page: number
@@ -117,6 +163,11 @@ export interface CreateCampaignResponse {
   campaign_id?: number
 }
 
+// Add new interface for batch campaign request
+export interface CreateBatchCampaignRequest {
+  template_id: number
+}
+
 export const contactsApi = {
   // Get contacts with pagination and search
   getContacts: async (page = 1, search = ""): Promise<ContactsResponse> => {
@@ -171,6 +222,56 @@ export const contactsApi = {
   },
 }
 
+// Add getBatchDetail method to batchesApi
+export const batchesApi = {
+  // Get batches with pagination and search
+  getBatches: async (page = 1, search = ""): Promise<BatchesResponse> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+    })
+
+    if (search.trim()) {
+      params.append("search", search.trim())
+    }
+
+    const response = await apiClient.get(`/batches?${params.toString()}`)
+    return response.data
+  },
+
+  // Get single batch with contacts and campaigns
+  getBatchDetail: async (batchId: number): Promise<Batch> => {
+    const response = await apiClient.get(`/batches/${batchId}`)
+    return response.data
+  },
+
+  // Import batch from file - Updated to use correct endpoint
+  importBatch: async (file: File, batchName: string): Promise<ImportResponse> => {
+    const formData = new FormData()
+    formData.append("file", file)
+    formData.append("batch_name", batchName)
+
+    const response = await axios.post(`${API_BASE_URL}/contacts/import`, formData, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "multipart/form-data",
+      },
+    })
+    return response.data
+  },
+
+  // Get batch contacts (deprecated - use getBatchDetail instead)
+  getBatchContacts: async (batchId: number): Promise<Contact[]> => {
+    const response = await apiClient.get(`/batches/${batchId}/contacts`)
+    return response.data
+  },
+
+  // Delete batch
+  deleteBatch: async (id: number) => {
+    const response = await apiClient.delete(`/batches/${id}`)
+    return response.data
+  },
+}
+
 export const templatesApi = {
   // Get templates with pagination
   getTemplates: async (page = 1): Promise<TemplatesResponse> => {
@@ -219,6 +320,12 @@ export const campaignsApi = {
   // Create campaign (send email)
   createCampaign: async (request: CreateCampaignRequest): Promise<CreateCampaignResponse> => {
     const response = await apiClient.post("/send-email", request)
+    return response.data
+  },
+
+  // Send email to batch - New method
+  sendEmailToBatch: async (batchId: number, request: CreateBatchCampaignRequest): Promise<CreateCampaignResponse> => {
+    const response = await apiClient.post(`/send-email/batch/${batchId}`, request)
     return response.data
   },
 }

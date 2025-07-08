@@ -18,10 +18,12 @@ class MarketingMail extends Mailable
      * Create a new message instance.
      */
     public $template;
+    public $contact;
 
-    public function __construct(EmailTemplate $template)
+    public function __construct(EmailTemplate $template, $contact = null)
     {
         $this->template = $template;
+        $this->contact = $contact;
     }
 
     /**
@@ -44,6 +46,9 @@ class MarketingMail extends Mailable
             with: [
                 'subject' => $this->template->subject,
                 'body' => $this->template->body,
+                'name' => $this->contact ? $this->contact->name : null,
+                'email' => $this->contact ? $this->contact->email : null,
+                'company' => $this->contact ? $this->contact->company : null,
             ]
         );
     }

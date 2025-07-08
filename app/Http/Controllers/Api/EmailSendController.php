@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\EmailTemplate;
 use App\Jobs\SendMarketingEmail;
 use App\Http\Controllers\Controller;
+use App\Models\BatchCompaign;
 
 class EmailSendController extends Controller
 {
@@ -44,6 +45,25 @@ class EmailSendController extends Controller
         foreach ($contacts as $contact) {
             dispatch(new SendMarketingEmail($contact, $template));
         }
+
+        return response()->json(['message' => 'Emails queued for all contacts.']);
+    }
+    public function to_batch_users($id,Request $request)
+    {
+        $request->validate([
+            'template_id' => 'required|exists:email_templates,id',
+        ]);
+
+        $template = EmailTemplate::findOrFail($request->template_id);
+        $contacts = Contact::where('batch_id', $id)->get();
+
+        foreach ($contacts as $contact) {
+            dispatch(new SendMarketingEmail($contact, $template));
+        }
+        BatchCompaign::create([
+            'batch_id' => $id,
+            'email_template_id' => $template->id,
+        ]);
 
         return response()->json(['message' => 'Emails queued for all contacts.']);
     }

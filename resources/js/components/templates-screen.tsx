@@ -1,26 +1,7 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useRef, useEffect } from "react"
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  Copy,
-  Loader2,
-  ImageIcon,
-  Video,
-  Bold,
-  Italic,
-  Underline,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  List,
-  ListOrdered,
-} from "lucide-react"
+import { useState } from "react"
+import { Plus, Edit, Trash2, Eye, Copy, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -34,128 +15,150 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { useTemplates } from "@/hooks/use-templates"
-import { useToast } from "@/hooks/use-toast"
-import type { Template } from "@/lib/api"
+import {
+  Bold,
+  Italic,
+  Underline,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  List,
+  ListOrdered,
+  Heading1,
+  Heading2,
+  ImageIcon,
+  Link,
+} from "lucide-react"
+
+// Mock data for templates
+const mockTemplates = [
+  {
+    id: 1,
+    title: "Welcome Email",
+    subject: "Welcome to our platform!",
+    body: `Hi {{name}},
+
+Welcome to our amazing platform! We're excited to have you on board.
+
+Here's what you can do next:
+- Complete your profile
+- Explore our features
+- Contact support if you need help
+
+Best regards,
+The Team
+
+---
+You can unsubscribe at any time by clicking here.`,
+    created_at: "2024-01-15T10:30:00Z",
+    updated_at: "2024-01-15T10:30:00Z",
+  },
+  {
+    id: 2,
+    title: "Product Update",
+    subject: "New features available now",
+    body: `Hello {{name}},
+
+We've just released some exciting new features that we think you'll love!
+
+New Features:
+- Enhanced dashboard
+- Better reporting
+- Mobile app improvements
+
+Check them out at: https://example.com/features
+
+Thanks,
+Product Team`,
+    created_at: "2024-01-10T14:20:00Z",
+    updated_at: "2024-01-12T09:15:00Z",
+  },
+  {
+    id: 3,
+    title: "Monthly Newsletter",
+    subject: "Your monthly update - January 2024",
+    body: `Dear {{name}},
+
+Here's what happened this month:
+
+📈 Company Updates:
+- 50% growth in user base
+- New office opening
+- Team expansion
+
+🚀 Product News:
+- Version 2.0 released
+- Bug fixes and improvements
+- New integrations available
+
+Stay tuned for more updates!
+
+Best,
+Newsletter Team`,
+    created_at: "2024-01-01T12:00:00Z",
+    updated_at: "2024-01-01T12:00:00Z",
+  },
+]
 
 export default function TemplatesScreen() {
-  const {
-    templates,
-    pagination,
-    loading,
-    error,
-    currentPage,
-    createTemplate,
-    updateTemplate,
-    deleteTemplate,
-    duplicateTemplate,
-    goToPage,
-    goToNextPage,
-    goToPrevPage,
-    refetch,
-  } = useTemplates()
-
+  const [templates, setTemplates] = useState(mockTemplates)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null)
-  const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null)
+  const [editingTemplate, setEditingTemplate] = useState(null)
+  const [previewTemplate, setPreviewTemplate] = useState(null)
   const [newTemplate, setNewTemplate] = useState({
     title: "",
     subject: "",
     body: "",
   })
 
-  const [uploading, setUploading] = useState(false)
-  const editorRef = useRef<HTMLDivElement>(null)
-  const imageInputRef = useRef<HTMLInputElement>(null)
-  const videoInputRef = useRef<HTMLInputElement>(null)
-
-  const editEditorRef = useRef<HTMLDivElement>(null)
-  const editImageInputRef = useRef<HTMLInputElement>(null)
-  const editVideoInputRef = useRef<HTMLInputElement>(null)
-
-  const { toast } = useToast()
-
-  // Initialize editor content
-  useEffect(() => {
-    if (editorRef.current && newTemplate.body === "") {
-      editorRef.current.innerHTML = `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-          <p>Start writing your email template here...</p>
-          <p>You can use variables like {{name}} and {{email}} for personalization.</p>
-        </div>
-      `
-    }
-  }, [isCreateDialogOpen])
-
-  const handleCreateTemplate = async () => {
-    if (!newTemplate.title || !newTemplate.subject) {
-      toast({
-        title: "Error",
-        description: "Please fill in template title and subject.",
-        variant: "destructive",
-      })
+  const handleCreateTemplate = () => {
+    if (!newTemplate.title || !newTemplate.subject || !newTemplate.body) {
+      alert("Please fill in all fields")
       return
     }
 
-    const bodyContent = editorRef.current?.innerHTML || ""
-    if (!bodyContent.trim() || bodyContent === "<div><br></div>") {
-      toast({
-        title: "Error",
-        description: "Please add content to your email template.",
-        variant: "destructive",
-      })
-      return
+    const template = {
+      id: Date.now(),
+      ...newTemplate,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     }
 
-    try {
-      await createTemplate({
-        title: newTemplate.title,
-        subject: newTemplate.subject,
-        body: bodyContent, // This will contain the full HTML with uploaded image URLs
-      })
-      setNewTemplate({ title: "", subject: "", body: "" })
-      if (editorRef.current) {
-        editorRef.current.innerHTML = ""
-      }
-      setIsCreateDialogOpen(false)
-    } catch (error) {
-      // Error is handled in the hook
-    }
+    setTemplates([template, ...templates])
+    setNewTemplate({ title: "", subject: "", body: "" })
+    setIsCreateDialogOpen(false)
+    alert("Template created successfully!")
   }
 
-  const handleEditTemplate = async () => {
+  const handleEditTemplate = () => {
     if (!editingTemplate) return
 
-    const bodyContent = editEditorRef.current?.innerHTML || editingTemplate.body
-
-    try {
-      await updateTemplate(editingTemplate.id, {
-        title: editingTemplate.title,
-        subject: editingTemplate.subject,
-        body: bodyContent, // This will contain the full HTML with any new uploaded image URLs
-      })
-      setEditingTemplate(null)
-    } catch (error) {
-      // Error is handled in the hook
-    }
+    setTemplates(
+      templates.map((t) =>
+        t.id === editingTemplate.id ? { ...editingTemplate, updated_at: new Date().toISOString() } : t,
+      ),
+    )
+    setEditingTemplate(null)
+    alert("Template updated successfully!")
   }
 
-  const handleDeleteTemplate = async (id: number) => {
+  const handleDeleteTemplate = (id: number) => {
     if (confirm("Are you sure you want to delete this template?")) {
-      try {
-        await deleteTemplate(id)
-      } catch (error) {
-        // Error is handled in the hook
-      }
+      setTemplates(templates.filter((t) => t.id !== id))
+      alert("Template deleted successfully!")
     }
   }
 
-  const handleDuplicateTemplate = async (template: Template) => {
-    try {
-      await duplicateTemplate(template)
-    } catch (error) {
-      // Error is handled in the hook
+  const handleDuplicateTemplate = (template: any) => {
+    const duplicated = {
+      ...template,
+      id: Date.now(),
+      title: `${template.title} (Copy)`,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     }
+    setTemplates([duplicated, ...templates])
+    alert("Template duplicated successfully!")
   }
 
   const formatDate = (dateString: string) => {
@@ -168,177 +171,14 @@ export default function TemplatesScreen() {
     })
   }
 
-  const stripHtml = (html: string) => {
-    const tmp = document.createElement("DIV")
-    tmp.innerHTML = html
-    return tmp.textContent || tmp.innerText || ""
-  }
+  const insertVariable = (variable: string, isEdit = false) => {
+    const variableHtml = `<span style="background-color: #e0f2fe; padding: 2px 4px; border-radius: 3px; font-weight: bold;">{{${variable}}}</span>`
 
-  const uploadFile = async (file: File): Promise<string> => {
-    const formData = new FormData()
-    formData.append("file", file)
-
-    const response = await fetch("http://localhost:8000/api/store-file", {
-      method: "POST",
-      body: formData,
-      headers: {
-        Accept: "application/json",
-      },
-    })
-
-    if (!response.ok) {
-      const errorData = await response.text()
-      throw new Error(`Upload failed: ${response.status} ${errorData}`)
-    }
-
-    const data = await response.json()
-    return data.file_url
-  }
-
-  const insertAtCursor = (html: string, editorElement: HTMLDivElement) => {
-    editorElement.focus()
-
-    const selection = window.getSelection()
-    if (selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0)
-      range.deleteContents()
-
-      const div = document.createElement("div")
-      div.innerHTML = html
-      const fragment = document.createDocumentFragment()
-
-      while (div.firstChild) {
-        fragment.appendChild(div.firstChild)
-      }
-
-      range.insertNode(fragment)
-      range.collapse(false)
-      selection.removeAllRanges()
-      selection.addRange(range)
+    if (isEdit) {
+      document.execCommand("insertHTML", false, variableHtml)
     } else {
-      // If no selection, append to end
-      editorElement.innerHTML += html
+      document.execCommand("insertHTML", false, variableHtml)
     }
-  }
-
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>, isEdit = false) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    if (!file.type.startsWith("image/")) {
-      toast({
-        title: "Invalid file",
-        description: "Please select an image file.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    try {
-      setUploading(true)
-      const fileUrl = await uploadFile(file)
-
-      const imgHtml = `
-        <div style="margin: 15px 0; text-align: center;">
-          <img src="${fileUrl}" alt="Email image" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
-        </div>
-      `
-
-      const targetEditor = isEdit ? editEditorRef.current : editorRef.current
-      if (targetEditor) {
-        insertAtCursor(imgHtml, targetEditor)
-      }
-
-      toast({
-        title: "Image uploaded",
-        description: "Image has been added to your template.",
-      })
-    } catch (error) {
-      console.error("Upload error:", error)
-      toast({
-        title: "Upload failed",
-        description: error instanceof Error ? error.message : "Failed to upload image. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setUploading(false)
-      // Clear the input
-      event.target.value = ""
-    }
-  }
-
-  const handleVideoUpload = async (event: React.ChangeEvent<HTMLInputElement>, isEdit = false) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    if (!file.type.startsWith("video/")) {
-      toast({
-        title: "Invalid file",
-        description: "Please select a video file.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    try {
-      setUploading(true)
-      const fileUrl = await uploadFile(file)
-
-      const videoHtml = `
-        <div style="margin: 15px 0; text-align: center;">
-          <video controls style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <source src="${fileUrl}" type="${file.type}">
-            Your browser does not support the video tag.
-          </video>
-        </div>
-      `
-
-      const targetEditor = isEdit ? editEditorRef.current : editorRef.current
-      if (targetEditor) {
-        insertAtCursor(videoHtml, targetEditor)
-      }
-
-      toast({
-        title: "Video uploaded",
-        description: "Video has been added to your template.",
-      })
-    } catch (error) {
-      console.error("Upload error:", error)
-      toast({
-        title: "Upload failed",
-        description: error instanceof Error ? error.message : "Failed to upload video. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setUploading(false)
-      // Clear the input
-      event.target.value = ""
-    }
-  }
-
-  const execCommand = (command: string, value?: string) => {
-    document.execCommand(command, false, value)
-  }
-
-  const ToolbarButton = ({
-    onClick,
-    children,
-    title,
-  }: { onClick: () => void; children: React.ReactNode; title: string }) => (
-    <Button type="button" variant="ghost" size="sm" onClick={onClick} title={title} className="h-8 w-8 p-0">
-      {children}
-    </Button>
-  )
-
-  if (error) {
-    return (
-      <div className="flex-1 p-6">
-        <div className="flex flex-col items-center justify-center h-64">
-          <p className="text-red-600 mb-4">Error loading templates: {error}</p>
-          <Button onClick={refetch}>Try Again</Button>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -355,7 +195,7 @@ export default function TemplatesScreen() {
               Create Template
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Email Template</DialogTitle>
               <DialogDescription>Create a new email template for your campaigns.</DialogDescription>
@@ -383,88 +223,239 @@ export default function TemplatesScreen() {
               </div>
 
               <div className="space-y-2">
-                <Label>Email Body (Rich Editor)</Label>
-                <div className="border rounded-lg overflow-hidden">
-                  {/* Toolbar */}
-                  <div className="flex items-center gap-1 p-2 border-b bg-gray-50 flex-wrap">
-                    <ToolbarButton onClick={() => execCommand("bold")} title="Bold">
-                      <Bold className="h-4 w-4" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => execCommand("italic")} title="Italic">
-                      <Italic className="h-4 w-4" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => execCommand("underline")} title="Underline">
-                      <Underline className="h-4 w-4" />
-                    </ToolbarButton>
-
-                    <div className="w-px h-6 bg-gray-300 mx-1" />
-
-                    <ToolbarButton onClick={() => execCommand("justifyLeft")} title="Align Left">
-                      <AlignLeft className="h-4 w-4" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => execCommand("justifyCenter")} title="Align Center">
-                      <AlignCenter className="h-4 w-4" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => execCommand("justifyRight")} title="Align Right">
-                      <AlignRight className="h-4 w-4" />
-                    </ToolbarButton>
-
-                    <div className="w-px h-6 bg-gray-300 mx-1" />
-
-                    <ToolbarButton onClick={() => execCommand("insertUnorderedList")} title="Bullet List">
-                      <List className="h-4 w-4" />
-                    </ToolbarButton>
-                    <ToolbarButton onClick={() => execCommand("insertOrderedList")} title="Numbered List">
-                      <ListOrdered className="h-4 w-4" />
-                    </ToolbarButton>
-
-                    <div className="w-px h-6 bg-gray-300 mx-1" />
-
-                    <input
-                      type="file"
-                      ref={imageInputRef}
-                      onChange={(e) => handleImageUpload(e, false)}
-                      accept="image/*"
-                      className="hidden"
-                    />
-                    <ToolbarButton onClick={() => imageInputRef.current?.click()} title="Insert Image">
-                      <ImageIcon className="h-4 w-4" />
-                    </ToolbarButton>
-
-                    <input
-                      type="file"
-                      ref={videoInputRef}
-                      onChange={(e) => handleVideoUpload(e, false)}
-                      accept="video/*"
-                      className="hidden"
-                    />
-                    <ToolbarButton onClick={() => videoInputRef.current?.click()} title="Insert Video">
-                      <Video className="h-4 w-4" />
-                    </ToolbarButton>
-
-                    {uploading && (
-                      <div className="flex items-center gap-2 ml-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-sm">Uploading...</span>
-                      </div>
-                    )}
+                <Label>Email Body</Label>
+                <div className="space-y-2">
+                  <div className="flex gap-2 flex-wrap">
+                    <Button type="button" variant="outline" size="sm" onClick={() => insertVariable("name")}>
+                      Add {"{{ name }}"}
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => insertVariable("email")}>
+                      Add {"{{ email }}"}
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => insertVariable("company")}>
+                      Add {"{{ company }}"}
+                    </Button>
                   </div>
+                  <div className="border rounded-lg overflow-hidden">
+                    {/* Toolbar */}
+                    <div className="flex items-center gap-1 p-2 border-b bg-gray-50 flex-wrap">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => document.execCommand("bold")}
+                        className="h-8 w-8 p-0"
+                        title="Bold"
+                      >
+                        <Bold className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => document.execCommand("italic")}
+                        className="h-8 w-8 p-0"
+                        title="Italic"
+                      >
+                        <Italic className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => document.execCommand("underline")}
+                        className="h-8 w-8 p-0"
+                        title="Underline"
+                      >
+                        <Underline className="h-4 w-4" />
+                      </Button>
 
-                  {/* Editor */}
-                  <div
-                    ref={editorRef}
-                    contentEditable
-                    className="min-h-[300px] p-4 focus:outline-none bg-white"
-                    style={{
-                      lineHeight: "1.6",
-                      fontFamily: "Arial, sans-serif",
-                    }}
-                    suppressContentEditableWarning={true}
-                  />
+                      <div className="w-px h-6 bg-gray-300 mx-1" />
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          document.execCommand("formatBlock", false, "<h1>")
+                          // Apply inline styles for better visibility
+                          const selection = window.getSelection()
+                          if (selection && selection.rangeCount > 0) {
+                            const range = selection.getRangeAt(0)
+                            const element = range.commonAncestorContainer.parentElement
+                            if (element && element.tagName === "H1") {
+                              element.style.fontSize = "2em"
+                              element.style.fontWeight = "bold"
+                              element.style.marginBottom = "0.5em"
+                            }
+                          }
+                        }}
+                        className="h-8 px-2"
+                        title="Heading 1"
+                      >
+                        <Heading1 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          document.execCommand("formatBlock", false, "<h2>")
+                          // Apply inline styles for better visibility
+                          const selection = window.getSelection()
+                          if (selection && selection.rangeCount > 0) {
+                            const range = selection.getRangeAt(0)
+                            const element = range.commonAncestorContainer.parentElement
+                            if (element && element.tagName === "H2") {
+                              element.style.fontSize = "1.5em"
+                              element.style.fontWeight = "bold"
+                              element.style.marginBottom = "0.4em"
+                            }
+                          }
+                        }}
+                        className="h-8 px-2"
+                        title="Heading 2"
+                      >
+                        <Heading2 className="h-4 w-4" />
+                      </Button>
+
+                      <div className="w-px h-6 bg-gray-300 mx-1" />
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => document.execCommand("justifyLeft")}
+                        className="h-8 w-8 p-0"
+                        title="Align Left"
+                      >
+                        <AlignLeft className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => document.execCommand("justifyCenter")}
+                        className="h-8 w-8 p-0"
+                        title="Align Center"
+                      >
+                        <AlignCenter className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => document.execCommand("justifyRight")}
+                        className="h-8 w-8 p-0"
+                        title="Align Right"
+                      >
+                        <AlignRight className="h-4 w-4" />
+                      </Button>
+
+                      <div className="w-px h-6 bg-gray-300 mx-1" />
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => document.execCommand("insertUnorderedList")}
+                        className="h-8 w-8 p-0"
+                        title="Bullet List"
+                      >
+                        <List className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => document.execCommand("insertOrderedList")}
+                        className="h-8 w-8 p-0"
+                        title="Numbered List"
+                      >
+                        <ListOrdered className="h-4 w-4" />
+                      </Button>
+
+                      <div className="w-px h-6 bg-gray-300 mx-1" />
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const input = document.createElement("input")
+                          input.type = "file"
+                          input.accept = "image/*"
+                          input.onchange = async (e) => {
+                            const file = (e.target as HTMLInputElement).files?.[0]
+                            if (file) {
+                              try {
+                                const formData = new FormData()
+                                formData.append("file", file)
+
+                                const response = await fetch("/api/upload-image", {
+                                  method: "POST",
+                                  body: formData,
+                                })
+
+                                if (response.ok) {
+                                  const data = await response.json()
+                                  const imageUrl = data.url
+                                  document.execCommand("insertImage", false, imageUrl)
+                                } else {
+                                  alert("Failed to upload image")
+                                }
+                              } catch (error) {
+                                console.error("Upload error:", error)
+                                alert("Error uploading image")
+                              }
+                            }
+                          }
+                          input.click()
+                        }}
+                        className="h-8 w-8 p-0"
+                        title="Insert Image"
+                      >
+                        <ImageIcon className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const url = prompt("Enter link URL:")
+                          if (url) document.execCommand("createLink", false, url)
+                        }}
+                        className="h-8 w-8 p-0"
+                        title="Insert Link"
+                      >
+                        <Link className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    {/* Rich Text Editor */}
+                    <div
+                      contentEditable
+                      className="min-h-[300px] p-4 focus:outline-none bg-white"
+                      style={{
+                        lineHeight: "1.6",
+                        fontFamily: "Arial, sans-serif",
+                      }}
+                      onInput={(e) => {
+                        const content = e.currentTarget.innerHTML
+                        setNewTemplate({ ...newTemplate, body: content })
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html:
+                          newTemplate.body ||
+                          "<p>Write your email content here...</p><p>Use the toolbar above to format your text, add images, and create beautiful emails!</p>",
+                      }}
+                      suppressContentEditableWarning={true}
+                    />
+                  </div>
                 </div>
                 <p className="text-xs text-gray-500">
-                  Use the toolbar to format text and add media. Variables like {`{{name}}`}, {`{{email}}`} will be
-                  replaced with actual values when sending.
+                  Use variables like {"{{ name }}"}, {"{{ email }}"}, {"{{ company }}"} for personalization. They will
+                  be replaced with actual values when sending.
                 </p>
               </div>
             </div>
@@ -472,241 +463,390 @@ export default function TemplatesScreen() {
               <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleCreateTemplate}>Create Template</Button>
+              <Button onClick={handleCreateTemplate}>
+                <Save className="mr-2 h-4 w-4" />
+                Create Template
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Loading templates...</span>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {templates.map((template) => (
-              <Card key={template.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">{template.title}</CardTitle>
-                      <CardDescription className="mt-1">Created: {formatDate(template.created_at)}</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Subject:</p>
-                      <p className="text-sm text-gray-600 truncate">{template.subject}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Content Preview:</p>
-                      <p className="text-sm text-gray-600 line-clamp-3">
-                        {stripHtml(template.body).substring(0, 100)}...
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-700">Last Updated:</p>
-                      <p className="text-sm text-gray-600">{formatDate(template.updated_at)}</p>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <div className="flex gap-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" onClick={() => setPreviewTemplate(template)}>
-                          <Eye className="h-3 w-3" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>{previewTemplate?.title}</DialogTitle>
-                          <DialogDescription>Template Preview</DialogDescription>
-                        </DialogHeader>
-                        {previewTemplate && (
-                          <div className="space-y-4">
-                            <div>
-                              <Label>Subject:</Label>
-                              <p className="mt-1 p-2 bg-gray-50 rounded">{previewTemplate.subject}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {templates.map((template) => (
+          <Card key={template.id} className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <CardTitle className="text-lg">{template.title}</CardTitle>
+                  <CardDescription className="mt-1">Created: {formatDate(template.created_at)}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Subject:</p>
+                  <p className="text-sm text-gray-600 truncate">{template.subject}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Content Preview:</p>
+                  <p className="text-sm text-gray-600 line-clamp-3">{template.body.substring(0, 100)}...</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Last Updated:</p>
+                  <p className="text-sm text-gray-600">{formatDate(template.updated_at)}</p>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <div className="flex gap-2">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" onClick={() => setPreviewTemplate(template)}>
+                      <Eye className="h-3 w-3" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>{previewTemplate?.title}</DialogTitle>
+                      <DialogDescription>Template Preview</DialogDescription>
+                    </DialogHeader>
+                    {previewTemplate && (
+                      <div className="space-y-4">
+                        <div>
+                          <Label>Subject:</Label>
+                          <p className="mt-1 p-2 bg-gray-50 rounded">{previewTemplate.subject}</p>
+                        </div>
+                        <div>
+                          <Label>Email Content:</Label>
+                          <div className="mt-1 p-4 bg-white border rounded max-h-64 overflow-y-auto">
+                            <pre className="whitespace-pre-wrap text-sm">{previewTemplate.body}</pre>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" onClick={() => setEditingTemplate({ ...template })}>
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Edit Template</DialogTitle>
+                      <DialogDescription>Make changes to your email template.</DialogDescription>
+                    </DialogHeader>
+                    {editingTemplate && (
+                      <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Template Title</Label>
+                            <Input
+                              value={editingTemplate.title}
+                              onChange={(e) => setEditingTemplate({ ...editingTemplate, title: e.target.value })}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Subject Line</Label>
+                            <Input
+                              value={editingTemplate.subject}
+                              onChange={(e) => setEditingTemplate({ ...editingTemplate, subject: e.target.value })}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Email Body</Label>
+                          <div className="space-y-2">
+                            <div className="flex gap-2 flex-wrap">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => insertVariable("name", true)}
+                              >
+                                Add {"{{ name }}"}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => insertVariable("email", true)}
+                              >
+                                Add {"{{ email }}"}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => insertVariable("company", true)}
+                              >
+                                Add {"{{ company }}"}
+                              </Button>
                             </div>
-                            <div>
-                              <Label>Email Preview:</Label>
+                            <div className="border rounded-lg overflow-hidden">
+                              {/* Edit Toolbar */}
+                              <div className="flex items-center gap-1 p-2 border-b bg-gray-50 flex-wrap">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => document.execCommand("bold")}
+                                  className="h-8 w-8 p-0"
+                                  title="Bold"
+                                >
+                                  <Bold className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => document.execCommand("italic")}
+                                  className="h-8 w-8 p-0"
+                                  title="Italic"
+                                >
+                                  <Italic className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => document.execCommand("underline")}
+                                  className="h-8 w-8 p-0"
+                                  title="Underline"
+                                >
+                                  <Underline className="h-4 w-4" />
+                                </Button>
+
+                                <div className="w-px h-6 bg-gray-300 mx-1" />
+
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    document.execCommand("formatBlock", false, "<h1>")
+                                    // Apply inline styles for better visibility
+                                    const selection = window.getSelection()
+                                    if (selection && selection.rangeCount > 0) {
+                                      const range = selection.getRangeAt(0)
+                                      const element = range.commonAncestorContainer.parentElement
+                                      if (element && element.tagName === "H1") {
+                                        element.style.fontSize = "2em"
+                                        element.style.fontWeight = "bold"
+                                        element.style.marginBottom = "0.5em"
+                                      }
+                                    }
+                                  }}
+                                  className="h-8 px-2"
+                                  title="Heading 1"
+                                >
+                                  <Heading1 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    document.execCommand("formatBlock", false, "<h2>")
+                                    // Apply inline styles for better visibility
+                                    const selection = window.getSelection()
+                                    if (selection && selection.rangeCount > 0) {
+                                      const range = selection.getRangeAt(0)
+                                      const element = range.commonAncestorContainer.parentElement
+                                      if (element && element.tagName === "H2") {
+                                        element.style.fontSize = "1.5em"
+                                        element.style.fontWeight = "bold"
+                                        element.style.marginBottom = "0.4em"
+                                      }
+                                    }
+                                  }}
+                                  className="h-8 px-2"
+                                  title="Heading 2"
+                                >
+                                  <Heading2 className="h-4 w-4" />
+                                </Button>
+
+                                <div className="w-px h-6 bg-gray-300 mx-1" />
+
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => document.execCommand("justifyLeft")}
+                                  className="h-8 w-8 p-0"
+                                  title="Align Left"
+                                >
+                                  <AlignLeft className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => document.execCommand("justifyCenter")}
+                                  className="h-8 w-8 p-0"
+                                  title="Align Center"
+                                >
+                                  <AlignCenter className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => document.execCommand("justifyRight")}
+                                  className="h-8 w-8 p-0"
+                                  title="Align Right"
+                                >
+                                  <AlignRight className="h-4 w-4" />
+                                </Button>
+
+                                <div className="w-px h-6 bg-gray-300 mx-1" />
+
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => document.execCommand("insertUnorderedList")}
+                                  className="h-8 w-8 p-0"
+                                  title="Bullet List"
+                                >
+                                  <List className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => document.execCommand("insertOrderedList")}
+                                  className="h-8 w-8 p-0"
+                                  title="Numbered List"
+                                >
+                                  <ListOrdered className="h-4 w-4" />
+                                </Button>
+
+                                <div className="w-px h-6 bg-gray-300 mx-1" />
+
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const input = document.createElement("input")
+                                    input.type = "file"
+                                    input.accept = "image/*"
+                                    input.onchange = async (e) => {
+                                      const file = (e.target as HTMLInputElement).files?.[0]
+                                      if (file) {
+                                        try {
+                                          const formData = new FormData()
+                                          formData.append("file", file)
+
+                                          const response = await fetch("/api/upload-image", {
+                                            method: "POST",
+                                            body: formData,
+                                          })
+
+                                          if (response.ok) {
+                                            const data = await response.json()
+                                            const imageUrl = data.url
+                                            document.execCommand("insertImage", false, imageUrl)
+                                          } else {
+                                            alert("Failed to upload image")
+                                          }
+                                        } catch (error) {
+                                          console.error("Upload error:", error)
+                                          alert("Error uploading image")
+                                        }
+                                      }
+                                    }
+                                    input.click()
+                                  }}
+                                  className="h-8 w-8 p-0"
+                                  title="Insert Image"
+                                >
+                                  <ImageIcon className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const url = prompt("Enter link URL:")
+                                    if (url) document.execCommand("createLink", false, url)
+                                  }}
+                                  className="h-8 w-8 p-0"
+                                  title="Insert Link"
+                                >
+                                  <Link className="h-4 w-4" />
+                                </Button>
+                              </div>
+
+                              {/* Rich Text Editor for Edit */}
                               <div
-                                className="mt-1 p-4 bg-white border rounded max-h-96 overflow-y-auto"
-                                dangerouslySetInnerHTML={{ __html: previewTemplate.body }}
+                                contentEditable
+                                className="min-h-[300px] p-4 focus:outline-none bg-white"
+                                style={{
+                                  lineHeight: "1.6",
+                                  fontFamily: "Arial, sans-serif",
+                                }}
+                                onInput={(e) => {
+                                  const content = e.currentTarget.innerHTML
+                                  setEditingTemplate({ ...editingTemplate, body: content })
+                                }}
+                                dangerouslySetInnerHTML={{ __html: editingTemplate.body }}
+                                suppressContentEditableWarning={true}
                               />
                             </div>
                           </div>
-                        )}
-                      </DialogContent>
-                    </Dialog>
-
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" onClick={() => setEditingTemplate(template)}>
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle>Edit Template</DialogTitle>
-                          <DialogDescription>Make changes to your email template.</DialogDescription>
-                        </DialogHeader>
-                        {editingTemplate && (
-                          <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <Label>Template Title</Label>
-                                <Input
-                                  value={editingTemplate.title}
-                                  onChange={(e) => setEditingTemplate({ ...editingTemplate, title: e.target.value })}
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label>Subject Line</Label>
-                                <Input
-                                  value={editingTemplate.subject}
-                                  onChange={(e) => setEditingTemplate({ ...editingTemplate, subject: e.target.value })}
-                                />
-                              </div>
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label>Email Body (Rich Editor)</Label>
-                              <div className="border rounded-lg overflow-hidden">
-                                {/* Edit Toolbar */}
-                                <div className="flex items-center gap-1 p-2 border-b bg-gray-50 flex-wrap">
-                                  <ToolbarButton onClick={() => execCommand("bold")} title="Bold">
-                                    <Bold className="h-4 w-4" />
-                                  </ToolbarButton>
-                                  <ToolbarButton onClick={() => execCommand("italic")} title="Italic">
-                                    <Italic className="h-4 w-4" />
-                                  </ToolbarButton>
-                                  <ToolbarButton onClick={() => execCommand("underline")} title="Underline">
-                                    <Underline className="h-4 w-4" />
-                                  </ToolbarButton>
-
-                                  <div className="w-px h-6 bg-gray-300 mx-1" />
-
-                                  <input
-                                    type="file"
-                                    ref={editImageInputRef}
-                                    onChange={(e) => handleImageUpload(e, true)}
-                                    accept="image/*"
-                                    className="hidden"
-                                  />
-                                  <ToolbarButton
-                                    onClick={() => editImageInputRef.current?.click()}
-                                    title="Insert Image"
-                                  >
-                                    <ImageIcon className="h-4 w-4" />
-                                  </ToolbarButton>
-
-                                  <input
-                                    type="file"
-                                    ref={editVideoInputRef}
-                                    onChange={(e) => handleVideoUpload(e, true)}
-                                    accept="video/*"
-                                    className="hidden"
-                                  />
-                                  <ToolbarButton
-                                    onClick={() => editVideoInputRef.current?.click()}
-                                    title="Insert Video"
-                                  >
-                                    <Video className="h-4 w-4" />
-                                  </ToolbarButton>
-                                </div>
-
-                                <div
-                                  ref={editEditorRef}
-                                  contentEditable
-                                  className="min-h-[300px] p-4 focus:outline-none bg-white"
-                                  style={{
-                                    lineHeight: "1.6",
-                                    fontFamily: "Arial, sans-serif",
-                                  }}
-                                  dangerouslySetInnerHTML={{ __html: editingTemplate.body }}
-                                  suppressContentEditableWarning={true}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                        <DialogFooter>
-                          <Button variant="outline" onClick={() => setEditingTemplate(null)}>
-                            Cancel
-                          </Button>
-                          <Button onClick={handleEditTemplate}>Save Changes</Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-
-                    <Button variant="outline" size="sm" onClick={() => handleDuplicateTemplate(template)}>
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeleteTemplate(template.id)}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-
-          {/* Pagination */}
-          {pagination && pagination.last_page > 1 && (
-            <div className="mt-8 flex justify-center">
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={goToPrevPage} disabled={!pagination.prev_page_url}>
-                  Previous
-                </Button>
-                <div className="flex gap-1">
-                  {Array.from({ length: Math.min(5, pagination.last_page) }, (_, i) => {
-                    const page = i + 1
-                    return (
-                      <Button
-                        key={page}
-                        variant={currentPage === page ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => goToPage(page)}
-                      >
-                        {page}
+                        </div>
+                      </div>
+                    )}
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setEditingTemplate(null)}>
+                        Cancel
                       </Button>
-                    )
-                  })}
-                </div>
-                <Button variant="outline" size="sm" onClick={goToNextPage} disabled={!pagination.next_page_url}>
-                  Next
+                      <Button onClick={handleEditTemplate}>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Changes
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
+                <Button variant="outline" size="sm" onClick={() => handleDuplicateTemplate(template)}>
+                  <Copy className="h-3 w-3" />
                 </Button>
               </div>
-            </div>
-          )}
 
-          {/* Empty State */}
-          {templates.length === 0 && !loading && (
-            <div className="text-center py-12">
-              <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <Plus className="h-8 w-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No templates yet</h3>
-              <p className="text-gray-500 mb-4">Get started by creating your first email template.</p>
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Template
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleDeleteTemplate(template.id)}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="h-3 w-3" />
               </Button>
-            </div>
-          )}
-        </>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+
+      {/* Empty State */}
+      {templates.length === 0 && (
+        <div className="text-center py-12">
+          <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <Plus className="h-8 w-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No templates yet</h3>
+          <p className="text-gray-500 mb-4">Get started by creating your first email template.</p>
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Template
+          </Button>
+        </div>
       )}
     </div>
   )

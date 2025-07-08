@@ -35,7 +35,7 @@ class SendMarketingEmail implements ShouldQueue
     public function handle(): void
     {
          try {
-            Mail::to($this->contact->email)->send(new MarketingMail($this->template));
+            Mail::to($this->contact->email)->send(new MarketingMail($this->template,$this->contact));
             EmailLog::create([
                 'contact_id' => $this->contact->id,
                 'email_template_id' => $this->template->id,

@@ -1,19 +1,17 @@
 "use client"
 
 import { useState } from "react"
-import { Users, Mail, Send, Home, FileText, UserX } from "lucide-react"
+import { Users, Mail, Send, Home, FileText, UserX, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import UsersScreen from "@/components/users-screen"
 import TemplatesScreen from "@/components/templates-screen"
 import CampaignScreen from "@/components/campaign-screen"
-import { usePage } from "@inertiajs/react"
-import { SharedData } from "@/types"
+import BatchesScreen from "@/components/batches-screen"
+import SendToBatchScreen from "@/components/send-to-batch-screen"
 
 export default function Dashboard() {
-     const page = usePage<SharedData>();
-        const { auth } = page.props;
-  const [activeScreen, setActiveScreen] = useState("users")
+  const [activeScreen, setActiveScreen] = useState("batches")
 
   const renderScreen = () => {
     switch (activeScreen) {
@@ -23,8 +21,12 @@ export default function Dashboard() {
         return <TemplatesScreen />
       case "campaigns":
         return <CampaignScreen />
+      case "batches":
+        return <BatchesScreen />
+      case "send-to-batch":
+        return <SendToBatchScreen />
       default:
-        return <UsersScreen />
+        return <BatchesScreen />
     }
   }
 
@@ -43,14 +45,28 @@ export default function Dashboard() {
               <AvatarFallback>JD</AvatarFallback>
             </Avatar>
             <div>
-              <div className="font-medium">{auth.user.name}</div>
-              <div className="text-sm text-cyan-200">{auth.user.email}</div>
+              <div className="font-medium">John Doe</div>
+              <div className="text-sm text-cyan-200">john.doe@example.com</div>
             </div>
           </div>
         </div>
 
         <nav className="flex-1 p-4">
           <ul className="space-y-2">
+            <li>
+              <Button
+                variant={activeScreen === "batches" ? "secondary" : "ghost"}
+                className={`w-full justify-start ${
+                  activeScreen === "batches"
+                    ? "bg-white text-cyan-500 hover:bg-gray-100"
+                    : "text-white hover:bg-cyan-400"
+                }`}
+                onClick={() => setActiveScreen("batches")}
+              >
+                <Package className="mr-2 h-4 w-4" />
+                User Batches
+              </Button>
+            </li>
             <li>
               <Button
                 variant={activeScreen === "users" ? "secondary" : "ghost"}
@@ -60,7 +76,7 @@ export default function Dashboard() {
                 onClick={() => setActiveScreen("users")}
               >
                 <Users className="mr-2 h-4 w-4" />
-                Users
+                All Users
               </Button>
             </li>
             <li>
@@ -79,6 +95,20 @@ export default function Dashboard() {
             </li>
             <li>
               <Button
+                variant={activeScreen === "send-to-batch" ? "secondary" : "ghost"}
+                className={`w-full justify-start ${
+                  activeScreen === "send-to-batch"
+                    ? "bg-white text-cyan-500 hover:bg-gray-100"
+                    : "text-white hover:bg-cyan-400"
+                }`}
+                onClick={() => setActiveScreen("send-to-batch")}
+              >
+                <Send className="mr-2 h-4 w-4" />
+                Send Mail to Batch
+              </Button>
+            </li>
+            <li>
+              <Button
                 variant={activeScreen === "campaigns" ? "secondary" : "ghost"}
                 className={`w-full justify-start ${
                   activeScreen === "campaigns"
@@ -87,11 +117,11 @@ export default function Dashboard() {
                 }`}
                 onClick={() => setActiveScreen("campaigns")}
               >
-                <Send className="mr-2 h-4 w-4" />
-                Send Campaigns
+                <Mail className="mr-2 h-4 w-4" />
+                Campaign History
               </Button>
             </li>
-            {/* <li>
+            <li>
               <Button variant="ghost" className="w-full justify-start text-white hover:bg-cyan-400">
                 <Mail className="mr-2 h-4 w-4" />
                 Welcome Email
@@ -108,7 +138,7 @@ export default function Dashboard() {
                 <UserX className="mr-2 h-4 w-4" />
                 Unsubscribe
               </Button>
-            </li> */}
+            </li>
           </ul>
         </nav>
       </div>
