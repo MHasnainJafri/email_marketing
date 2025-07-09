@@ -1,9 +1,10 @@
 "use client"
 
 import { DialogTrigger } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 import type React from "react"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import {
   Upload,
   Users,
@@ -38,6 +39,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useBatches } from "@/hooks/use-batches"
 import type { Batch } from "@/lib/api"
 import { setSelectedBatchDetail } from "@/hooks/use-batches" // Import setSelectedBatchDetail
+import { templatesApi, campaignsApi } from "@/lib/api"
+import { toast } from "sonner"
 
 export default function BatchesScreen() {
   const {
@@ -68,6 +71,11 @@ export default function BatchesScreen() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [importResult, setImportResult] = useState<any>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false)
+  const [selectedTemplateForCampaign, setSelectedTemplateForCampaign] = useState<number | null>(null)
+  const [sendingCampaign, setSendingCampaign] = useState(false)
+  const [templates, setTemplates] = useState<any[]>([])
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -147,6 +155,50 @@ export default function BatchesScreen() {
     return contactsCount > 0 ? "bg-green-500" : "bg-gray-500"
   }
 
+  const loadTemplates = async () => {
+    try {
+      const templatesData = await templatesApi.getAllTemplates()
+      setTemplates(templatesData)
+    } catch (error) {
+      console.error("Failed to load templates:", error)
+    }
+  }
+
+  const handleSendCampaign = async () => {
+    if (!selectedTemplateForCampaign || !selectedBatch) {
+      alert("Please select a template")
+      return
+    }
+
+    try {
+      setSendingCampaign(true)
+      const response = await campaignsApi.sendEmailToBatch(selectedBatch.id, {
+        template_id: selectedTemplateForCampaign,
+      })
+
+      if (response.success) {
+        toast({
+          title: "Campaign Sent",
+          description: response.message || "Campaign has been sent successfully.",
+        })
+        setIsCampaignModalOpen(false)
+        setSelectedTemplateForCampaign(null)
+        // Refresh batch detail to show new campaign
+        await fetchBatchDetail(selectedBatch.id)
+      }
+    } catch (error) {
+      // Error handled in API
+    } finally {
+      setSendingCampaign(false)
+    }
+  }
+
+  useEffect(() => {
+    if (isCampaignModalOpen) {
+      loadTemplates()
+    }
+  }, [isCampaignModalOpen])
+
   if (selectedBatch && selectedBatchDetail) {
     return (
       <div className="flex-1 p-6">
@@ -186,8 +238,78 @@ export default function BatchesScreen() {
               <Mail className="mr-2 h-4 w-4" />
               Campaigns ({selectedBatchDetail.campaigns.length})
             </Button>
+            <Button
+              onClick={() => setIsCampaignModalOpen(true)}
+              disabled={!selectedBatchDetail.contacts || selectedBatchDetail.contacts.length === 0}
+            >
+              <Send className="mr-2 h-4 w-4" />
+              Send Campaign
+            </Button>
           </div>
         </div>
+        <Dialog open={isCampaignModalOpen} onOpenChange={setIsCampaignModalOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Send Campaign to Batch</DialogTitle>
+              <DialogDescription>
+                Send an email campaign to all {selectedBatchDetail.contacts?.length || 0} users in "
+                {selectedBatchDetail.name}" batch.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Select Email Template</Label>
+                <Select
+                  value={selectedTemplateForCampaign?.toString() || ""}
+                  onValueChange={(value) => setSelectedTemplateForCampaign(Number(value))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {templates.map((template) => (
+                      <SelectItem key={template.id} value={template.id.toString()}>
+                        <div>
+                          <div className="font-medium">{template.title}</div>
+                          <div className="text-sm text-gray-500">{template.subject}</div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {selectedTemplateForCampaign && (
+                <Alert>
+                  <Mail className="h-4 w-4" />
+                  <AlertDescription>
+                    This campaign will be sent to {selectedBatchDetail.contacts?.length || 0} users in this batch.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCampaignModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSendCampaign} disabled={!selectedTemplateForCampaign || sendingCampaign}>
+                {sendingCampaign ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Send Campaign
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <div className="bg-white rounded-lg shadow">
           {viewMode === "users" ? (

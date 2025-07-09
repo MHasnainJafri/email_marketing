@@ -40,18 +40,24 @@ class MarketingMail extends Mailable
      * Get the message content definition.
      */
     public function content(): Content
-    {
-        return new Content(
-            view: 'emails.marketing',
-            with: [
-                'subject' => $this->template->subject,
-                'body' => $this->template->body,
-                'name' => $this->contact ? $this->contact->name : null,
-                'email' => $this->contact ? $this->contact->email : null,
-                'company' => $this->contact ? $this->contact->company : null,
-            ]
-        );
-    }
+{
+    $replacements = [
+        '{{name}}' => $this->contact?->name ?? '',
+        '{{email}}' => $this->contact?->email ?? '',
+        '{{company}}' => $this->contact?->company ?? '',
+    ];
+
+    $parsedBody = strtr($this->template->body, $replacements);
+
+    return new Content(
+        view: 'emails.marketing',
+        with: [
+            'subject' => $this->template->subject,
+            'body' => $parsedBody,
+        ]
+    );
+}
+
 
     /**
      * Get the attachments for the message.

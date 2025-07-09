@@ -63,7 +63,10 @@
 
     <!-- Logo/Header -->
     <div class="email-header">
-      <img src="{{ env('APP_URL') }}/logo.png" alt="FinGov">
+      <a href="{{ env('APP_URL') }}" style="display: inline-block;">
+        <img src="{{ env('APP_URL') }}/logo.png" alt="FinGov Logo" style="max-height: 60px; display: block; margin: 0 auto;">
+      </a>
+      {{-- <h2 style="color: #fff; margin-top: 15px; font-weight: 600; letter-spacing: 1px;">FinGov</h2> --}}
     </div>
 
     <!-- Body -->

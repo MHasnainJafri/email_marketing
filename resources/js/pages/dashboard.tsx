@@ -10,7 +10,7 @@ import CampaignScreen from "@/components/campaign-screen"
 import BatchesScreen from "@/components/batches-screen"
 import SendToBatchScreen from "@/components/send-to-batch-screen"
 
-export default function Dashboard() {
+export default function EmailAutomationDashboard() {
   const [activeScreen, setActiveScreen] = useState("batches")
 
   const renderScreen = () => {
