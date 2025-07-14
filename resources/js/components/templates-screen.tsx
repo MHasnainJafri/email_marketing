@@ -394,19 +394,27 @@ export default function TemplatesScreen() {
                     {/* Rich Text Editor */}
                     <div
                       contentEditable
+                      dir="ltr"
+                      lang="en"
+                      spellCheck="false"
                       className="min-h-[300px] p-4 focus:outline-none bg-white"
                       style={{
                         lineHeight: "1.6",
                         fontFamily: "Arial, sans-serif",
+                        direction: "ltr",
+                        textAlign: "left",
+                        unicodeBidi: "embed",
+                      }}
+                      ref={el => {
+                        if (el && newTemplate.body === "" && el.innerHTML !== "<p>Write your email content here...</p><p>Use the toolbar above to format your text, add images, and create beautiful emails!</p>") {
+                          el.innerHTML = "<p>Write your email content here...</p><p>Use the toolbar above to format your text, add images, and create beautiful emails!</p>";
+                        } else if (el && newTemplate.body !== "" && el.innerHTML !== newTemplate.body) {
+                          el.innerHTML = newTemplate.body;
+                        }
                       }}
                       onInput={(e) => {
                         const content = e.currentTarget.innerHTML
                         setNewTemplate({ ...newTemplate, body: content })
-                      }}
-                      dangerouslySetInnerHTML={{
-                        __html:
-                          newTemplate.body ||
-                          "<p>Write your email content here...</p><p>Use the toolbar above to format your text, add images, and create beautiful emails!</p>",
                       }}
                       suppressContentEditableWarning={true}
                     />
@@ -766,10 +774,16 @@ export default function TemplatesScreen() {
                                   {/* Rich Text Editor for Edit */}
                                   <div
                                     contentEditable
+                                    dir="ltr"
+                                    lang="en"
+                                    spellCheck="false"
                                     className="min-h-[300px] p-4 focus:outline-none bg-white"
                                     style={{
                                       lineHeight: "1.6",
                                       fontFamily: "Arial, sans-serif",
+                                      direction: "ltr",
+                                      textAlign: "left",
+                                      unicodeBidi: "embed",
                                     }}
                                     onInput={(e) => {
                                       const content = e.currentTarget.innerHTML
