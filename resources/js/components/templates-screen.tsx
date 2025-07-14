@@ -191,9 +191,9 @@ export default function TemplatesScreen() {
                     <Button type="button" variant="outline" size="sm" onClick={() => insertVariable("email")}>
                       Add {"{{ email }}"}
                     </Button>
-                    <Button type="button" variant="outline" size="sm" onClick={() => insertVariable("company")}>
+                    {/* <Button type="button" variant="outline" size="sm" onClick={() => insertVariable("company")}>
                       Add {"{{ company }}"}
-                    </Button>
+                    </Button> */}
                   </div>
                   <div className="border rounded-lg overflow-hidden">
                     {/* Toolbar */}
@@ -406,8 +406,8 @@ export default function TemplatesScreen() {
                         unicodeBidi: "embed",
                       }}
                       ref={el => {
-                        if (el && newTemplate.body === "" && el.innerHTML !== "<p>Write your email content here...</p><p>Use the toolbar above to format your text, add images, and create beautiful emails!</p>") {
-                          el.innerHTML = "<p>Write your email content here...</p><p>Use the toolbar above to format your text, add images, and create beautiful emails!</p>";
+                        if (el && newTemplate.body === "" && el.innerHTML !== "<p>Write your email content here...</p>") {
+                          el.innerHTML = "<p>Write your email content here...</p>";
                         } else if (el && newTemplate.body !== "" && el.innerHTML !== newTemplate.body) {
                           el.innerHTML = newTemplate.body;
                         }
@@ -421,7 +421,7 @@ export default function TemplatesScreen() {
                   </div>
                 </div>
                 <p className="text-xs text-gray-500">
-                  Use variables like {"{{ name }}"}, {"{{ email }}"}, {"{{ company }}"} for personalization. They will
+                  Use variables like {"{{ name }}"}, {"{{ email }}"} for personalization. They will
                   be replaced with actual values when sending.
                 </p>
               </div>
@@ -568,14 +568,14 @@ export default function TemplatesScreen() {
                                   >
                                     Add {"{{ email }}"}
                                   </Button>
-                                  <Button
+                                  {/* <Button
                                     type="button"
                                     variant="outline"
                                     size="sm"
                                     onClick={() => insertVariable("company", true)}
                                   >
                                     Add {"{{ company }}"}
-                                  </Button>
+                                  </Button> */}
                                 </div>
                                 <div className="border rounded-lg overflow-hidden">
                                   {/* Edit Toolbar - Same as create toolbar */}

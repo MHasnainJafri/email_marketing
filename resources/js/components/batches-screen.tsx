@@ -35,7 +35,7 @@ import { useBatches } from "@/hooks/use-batches"
 import type { Batch } from "@/lib/api"
 import { setSelectedBatchDetail } from "@/hooks/use-batches" // Import setSelectedBatchDetail
 import { templatesApi, campaignsApi } from "@/lib/api"
-import { toast } from "sonner"
+import { useToast } from "@/hooks/use-toast"
 
 export default function BatchesScreen() {
   const {
@@ -72,6 +72,8 @@ export default function BatchesScreen() {
   const [sendingCampaign, setSendingCampaign] = useState(false)
   const [templates, setTemplates] = useState<any[]>([])
 
+  const { toast } = useToast()
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
@@ -97,6 +99,9 @@ export default function BatchesScreen() {
       setImportResult(result)
 
       if (result.success) {
+        // Refresh batches list immediately
+        await refetch()
+
         // Close dialog after successful import
         setTimeout(() => {
           setIsImportDialogOpen(false)
@@ -173,16 +178,26 @@ export default function BatchesScreen() {
 
       if (response.success) {
         toast({
-          title: "Campaign Sent",
-          description: response.message || "Campaign has been sent successfully.",
+          title: "Campaign Sent Successfully",
+          description: response.message || "Campaign has been sent to all users in this batch.",
         })
         setIsCampaignModalOpen(false)
         setSelectedTemplateForCampaign(null)
         // Refresh batch detail to show new campaign
         await fetchBatchDetail(selectedBatch.id)
+      } else {
+        toast({
+          title: "Campaign Failed",
+          description: response.message || "Failed to send campaign to batch",
+          variant: "destructive",
+        })
       }
     } catch (error) {
-      // Error handled in API
+      toast({
+        title: "Campaign Error",
+        description: "An error occurred while sending the campaign. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setSendingCampaign(false)
     }
