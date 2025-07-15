@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->string('name')->nullable();
             $table->string('company')->nullable();
-            $table->string('email')->unique();
+            $table->string('email');
             //batch_id
             $table->foreignId('batch_id')->nullable()->constrained('batches')->onDelete('cascade');
             $table->timestamps();
