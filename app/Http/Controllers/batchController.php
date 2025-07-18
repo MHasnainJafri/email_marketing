@@ -29,4 +29,10 @@ class batchController extends Controller
         $batch = Batch::with(['contacts', 'campaigns.emailTemplate'])->findOrFail($id);
         return response()->json($batch);
     }
+    public function delete($id)
+    {
+        $batch = Batch::findOrFail($id);
+        $batch->delete();
+        return response()->json($batch);
+    }
 }

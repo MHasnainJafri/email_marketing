@@ -20,6 +20,7 @@ Route::prefix('contacts')->group(function () {
 Route::prefix('batches')->group(function () {
     Route::get('/', [batchController::class, 'index']);
     Route::get('/{id}', [batchController::class, 'show']);
+    Route::delete('/{id}', [batchController::class, 'delete']);
 });
 
 // routes/api.php
