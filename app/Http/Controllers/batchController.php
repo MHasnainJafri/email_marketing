@@ -31,8 +31,20 @@ class batchController extends Controller
     }
     public function delete($id)
     {
-        $batch = Batch::findOrFail($id);
-        $batch->delete();
-        return response()->json($batch);
+        try {
+            \DB::beginTransaction();
+            
+            $batch = Batch::findOrFail($id);
+            $batch->contacts()->delete();
+            $batch->campaigns()->delete();
+            $batch->delete();
+            
+            \DB::commit();
+            return response()->json($batch);
+            
+        } catch (\Exception $e) {
+            \DB::rollback();
+            return response()->json(['error' => 'Failed to delete batch'], 500);
+        }
     }
 }
