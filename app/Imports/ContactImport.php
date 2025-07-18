@@ -22,13 +22,14 @@ class ContactImport implements ToModel, WithHeadingRow
         }
 
         // Check if contact with this email already exists in any batch
-        // if (Contact::where('email', $email)->exists()) {
-        //     return null; // skip if already exists
-        // }
+        if (Contact::where('email', $email)->exists()) {
+            return null; // skip if already exists
+        }
 
         // Create new contact
         return new Contact([
             'name'     => $row['name'] ?? $row['user_name'] ?? null,
+            'company'  => $row['company'] ?? $row['company_name'] ?? null,
             'email'    => $email,
             'batch_id' => $this->batchId,
         ]);
