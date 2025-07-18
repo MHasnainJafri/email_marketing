@@ -120,7 +120,7 @@ export default function TemplatesScreen() {
   }
 
   const insertVariable = (variable: string, isEdit = false) => {
-    const variableHtml = `<span style="background-color: #e0f2fe; padding: 2px 4px; border-radius: 3px; font-weight: bold;">{{${variable}}}</span>`
+    const variableHtml = `<span>{{${variable}}}</span>  `
 
     if (isEdit) {
       document.execCommand("insertHTML", false, variableHtml)
